@@ -1,0 +1,8 @@
+<map id="Tensor::index" name="Tensor::index">
+<area shape="rect" id="node2" href="$classTensor.html#af29c0ff50c2dbd82543cbc0d2ff95358" title="Tensor::print" alt="" coords="158,5,253,32"/>
+<area shape="rect" id="node3" href="$classTensor.html#a862952dc137707abdccd06cf9cd5855b" title="Tensor::plane" alt="" coords="155,56,256,83"/>
+<area shape="rect" id="node4" href="$classTensor.html#a3986d7a50faef0249a8d2da5b1f67a89" title="Tensor::transform" alt="" coords="310,31,435,57"/>
+<area shape="rect" id="node5" href="$classTensor.html#a447f65c9ada7c9357091fba66ad73d10" title="Tensor::accumulate" alt="" coords="304,81,441,108"/>
+<area shape="rect" id="node6" href="$classTensor.html#abf7346c2dbd5e6b195cfe9b66e5049e8" title="Tensor::max_dim" alt="" coords="489,56,612,83"/>
+<area shape="rect" id="node7" href="$classTensor.html#a6c8465a488ce260e6e05f1a3ceb8ab26" title="Tensor::avg_dim" alt="" coords="491,107,610,133"/>
+</map>

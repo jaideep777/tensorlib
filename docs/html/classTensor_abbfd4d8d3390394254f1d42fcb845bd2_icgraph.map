@@ -1,0 +1,5 @@
+<map id="Tensor::accumulate_dim" name="Tensor::accumulate_dim">
+<area shape="rect" id="node2" href="$classTensor.html#a447f65c9ada7c9357091fba66ad73d10" title="Tensor::accumulate" alt="" coords="219,31,356,57"/>
+<area shape="rect" id="node3" href="$classTensor.html#abf7346c2dbd5e6b195cfe9b66e5049e8" title="Tensor::max_dim" alt="" coords="404,5,527,32"/>
+<area shape="rect" id="node4" href="$classTensor.html#a6c8465a488ce260e6e05f1a3ceb8ab26" title="Tensor::avg_dim" alt="" coords="406,56,525,83"/>
+</map>
