@@ -35,4 +35,6 @@
 
 # backups
 *~
-
+*.swp
+*.swn
+*.swo
