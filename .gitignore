@@ -38,4 +38,7 @@
 *.swp
 *.swn
 *.swo
+
+.Rbuildignore
+
 docs
