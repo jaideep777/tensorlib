@@ -11,29 +11,21 @@
 
 
 /**
- Tensor. Multidimensional Array with 
- dimensions [..., N2, N1, N0 ] 
- indexed as [..., i2, i1, i0 ]
+ Tensor. Multidimensional Array
  
- i0 is the lowest dimension (elements along i0 are stored consequtively in memory.
+ A tensor with dimensions
+ ```
+ { N2, N1, N0 } 
+ ```
+ is as follows.
+ \image html tensorlib_tensor.png width=400cm 
  
- Example, an array with dimensions [2,3,5] is stored as:
-
+ Elements of this tensor are accessed with a vector of indices as
  ```
- Tensor:
-   axis   2 1 0
-   dims = 2 3 5 
-   vals = 
-    +-----+--+--+--+--+------> axis 0
-    |+    0  1  2  3  4 
-    | \   5  6  7  8  9 
-    |  \ 10 11 12 13 14 
-    v   \
-  axis 1 +     15 16 17 18 19 
-          \    20 21 22 23 24 
-           \   25 26 27 28 29 
-     axis 2 V
+ { i2, i1, i0 }
  ```
+ i0 is the lowest dimension, i.e., (elements along i0 are stored consequtively in memory.
+ 
  */
 
 // i.e.. the indices of each element are      
