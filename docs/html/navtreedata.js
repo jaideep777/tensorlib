@@ -1,6 +1,7 @@
 var NAVTREE =
 [
   [ "TensorLib", "index.html", [
+    [ "Home", "../index.html", null ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],
@@ -16,13 +17,14 @@ var NAVTREE =
         [ "All", "globals.html", null ],
         [ "Functions", "globals_func.html", null ]
       ] ]
-    ] ]
+    ] ],
+    [ "Github", "^https://github.com/jaideep777/tensorlib", null ]
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
-"annotated.html"
+"../index.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
