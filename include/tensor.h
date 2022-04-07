@@ -25,41 +25,30 @@
  { i2, i1, i0 }
  ```
  i0 is the lowest dimension, i.e., (elements along i0 are stored consequtively in memory.
+  This order of indices is chosen rather than {i0, i1, i2} to allow matrices 
+  (two dimensional tensors) to be refered as {irow, icolumn}. 
+
+ Thus the indices of each element of a 2x3x5 Tensor are 
+ ``` 
+   loc: index 
+   ---:------
+     0: 0 0 0 
+     1: 0 0 1 
+     2: 0 0 2 
+     3: 0 0 3 
+     4: 0 0 4 
+     5: 0 1 0 
+     6: 0 1 1 
+          :   
+    25: 1 2 0 
+    26: 1 2 1 
+    27: 1 2 2 
+    28: 1 2 3 
+    29: 1 2 4  
+ ```   
  
  */
 
-// i.e.. the indices of each element are      
-// loc: index
-//     0: 0 0 0
-//     1: 0 0 1 
-//     2: 0 0 2 
-//     3: 0 0 3 
-//     4: 0 0 4 
-//     5: 0 1 0 
-//     6: 0 1 1 
-//     7: 0 1 2 
-//     8: 0 1 3 
-//     9: 0 1 4 
-//    10: 0 2 0 
-//    11: 0 2 1 
-//    12: 0 2 2 
-//    13: 0 2 3 
-//    14: 0 2 4 
-//    15: 1 0 0 
-//    16: 1 0 1 
-//    17: 1 0 2 
-//    18: 1 0 3 
-//    19: 1 0 4 
-//    20: 1 1 0 
-//    21: 1 1 1 
-//    22: 1 1 2 
-//    23: 1 1 3 
-//    24: 1 1 4 
-//    25: 1 2 0 
-//    26: 1 2 1 
-//    27: 1 2 2 
-//    28: 1 2 3 
-//    29: 1 2 4  
 
 template <class T>
 class Tensor{
@@ -71,6 +60,8 @@ class Tensor{
 	std::vector<int> dim;
 	std::vector<T> vec;
 
+	/// Create a tensor with specified dimensions.
+	/// This function also allocates space for the tensor, and calculates the offsets used for indexing.
 	Tensor(std::vector<int> _dim){
 		dim = _dim;
 		nelem = std::accumulate(dim.begin(), dim.end(), 1, std::multiplies<int>());
@@ -87,6 +78,8 @@ class Tensor{
 	}
 
 
+	/// Print the tensor.
+	/// If vals is true, then values are also printed. Otherwise, only metadata is printed.
 	void print(bool vals = true){
 	    std::cout << "Tensor:\n";
 	    std::cout << "   dims = "; for (auto d : dim) std::cout << d << " "; std::cout << "\n";
@@ -104,7 +97,10 @@ class Tensor{
 		}
 		std::cout << "\n";
 	}
-		
+	
+//	TODO: 
+//	This function can be private
+	/// Convert coordinates (specified as a vector of indices) to 1D index where the value resides in the underlying vector.
 	int location(std::vector <int> ix){
 		int loc = 0;
 		int ndim = dim.size();
@@ -119,10 +115,22 @@ class Tensor{
 		return location({ids...});
 	}
 
+
+	/// @brief Get the value at coordinates specified as a comma separated list. 
+	///        The order of coordinates is \f$\{i_n, i_{n-1}, ..., i_0\}\f$
+	template<class... ARGS>
+	double& operator() (ARGS... ids){
+		return vec[location({ids...})];
+	}
+
+	/// @brief Get the value at coordinates specified as an integer vector. 
+	///        The order of coordinates is \f$\{i_n, i_{n-1}, ..., i_0\}\f$.
 	double& operator() (std::vector<int> ix){
 		return vec[location(ix)];
 	}
 
+
+	/// Convert 1D index to coordinates (Inverse of location())
 	std::vector<int> index(int loc){
 		int ndim = dim.size();
 		std::vector<int> id(ndim);
@@ -134,13 +142,15 @@ class Tensor{
 		return id;
 	}
 
-	// for debug only
+	/// A utility function for testing purposes. Fills the tensor with incremental integers. 
 	void fill_sequence(){
 		for(int i=0; i<vec.size(); ++i) vec[i]=i;
 	}
 
 	
-	// generate indices on the plane perpendicular to 'axis' at index 'k' on the axis 
+	/// @brief generate a list of 1D indices corresponding to all points on the hyperplane 
+	/// perpendicular to 'axis' located at index 'k' on the axis. The axis is specified
+	/// as the index of the corresponding dimension, i.e., between [0, n-1].
 	std::vector<int> plane(int axis, int k = 0){
 		axis = dim.size()-1-axis;
 		std::vector<int> locs;
