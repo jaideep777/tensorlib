@@ -1,7 +1,9 @@
-#include "tensor.h"
+#include "../include/tensor.h"
 #include <iostream>
 
 using namespace std;
+
+// compile:  g++ -Wall -Wextra -o 1 test.cpp 
 
 bool equals(double x1, double x2, double tol=1e-6){
 	return (abs(x1-x2) < tol);
