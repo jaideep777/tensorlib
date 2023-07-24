@@ -75,8 +75,10 @@ class Tensor{
 	std::vector<int> dim;
 	std::vector<T> vec;
 
+	// metadata
 	T missing_value = std::numeric_limits<T>::quiet_NaN();
 
+	public:
 	/// Create a tensor with specified dimensions.
 	/// This function also allocates space for the tensor, and calculates the offsets used for indexing.
 	Tensor(std::vector<int> _dim){
@@ -101,6 +103,7 @@ class Tensor{
 	    std::cout << "Tensor:\n";
 	    std::cout << "   dims = "; for (auto d : dim) std::cout << d << " "; std::cout << "\n";
 	    std::cout << "   offs = "; for (auto d : offsets) std::cout << d << " "; std::cout << "\n";
+	    std::cout << "   missing value = " << missing_value << "\n";
 		if (vals){
 			std::cout << "   vals = \n      "; std::cout.flush();
 			for (int i=0; i<nelem; ++i){
@@ -168,6 +171,10 @@ class Tensor{
 	/// @brief generate a list of 1D indices corresponding to all points on the hyperplane 
 	/// perpendicular to 'axis' located at index 'k' on the axis. The axis is specified
 	/// as the index of the corresponding dimension, i.e., between [0, n-1].
+	// axis is counted from the right
+	// [..., 2, 1, 0]
+	//          ^
+	//           axis
 	std::vector<int> plane(int axis, int k = 0){
 		axis = dim.size()-1-axis;
 		std::vector<int> locs;
@@ -182,15 +189,15 @@ class Tensor{
 	// [..., 2, 1, 0]
 	//          ^
 	//           axis
-	template <class BinOp, class S>
-	void transform_dim(int loc, int axis, BinOp binary_op, std::vector<S> w){
+	template <class BinOp>
+	void transform_dim(int loc, int axis, BinOp binary_op, std::vector<double> w){
 		assert(w.size() == dim[dim.size()-1-axis]);
 		
 		axis = dim.size()-1-axis;
 		int off = offsets[axis];
 		
 		for (int i=loc, count=0; count<dim[axis]; i+= off, ++count){
-			vec[i] = binary_op(vec[i], w[count]);	// this order is important, because the operator may not be commutative
+			if (vec[i] != missing_value) vec[i] = binary_op(vec[i], w[count]);	// this order is important, because the operator may not be commutative
 		}
 		
 	}
@@ -199,8 +206,8 @@ class Tensor{
 	// [..., 2, 1, 0]
 	//          ^
 	//           axis
-	template <class BinOp, class S>
-	void transform(int axis, BinOp binary_op, std::vector<S> w){
+	template <class BinOp>
+	void transform(int axis, BinOp binary_op, std::vector<double> w){
 		std::vector<int> locs = plane(axis);
 		for (int i=0; i<locs.size(); ++i){
 			transform_dim(locs[i], axis, binary_op, w);
@@ -230,7 +237,7 @@ class Tensor{
 		T v = v0;
 		for (int i=loc, count=0; count<dim[axis]; i+= off, ++count){
 			double w = (weights.size()>0)? weights[count] : 1;
-			v = binary_op(v, w*vec[i]);
+			if (vec[i] != missing_value) v = binary_op(v, w*vec[i]);
 		}
 		
 		return v;
@@ -246,6 +253,7 @@ class Tensor{
 		std::vector<int> dim_new = dim;
 		dim_new.erase(dim_new.begin()+dim_new.size()-1-axis);
 		Tensor<T> tens(dim_new);
+		tens.missing_value = this->missing_value;
 		
 		std::vector<int> locs = plane(axis);
 		
@@ -259,13 +267,43 @@ class Tensor{
 
 	Tensor<T> max_dim(int axis){
 		T v0 = vec[1];
-		return accumulate(v0, axis, [](T a, T b){return std::max(a,b);});
+		return accumulate(v0, axis, [this](T a, T b){
+			                            return (b == this->missing_value)? this->missing_value : std::max(a,b);
+			                            });
 	}
 
 
-	Tensor<T> avg_dim(int axis, std::vector<double> weights={}){
-		Tensor tens = accumulate(0, axis, std::plus<T>(), weights);
-		tens /= double(dim[dim.size()-1-axis]);
+	int count_non_missing_dim(int loc, int axis){
+		axis = dim.size()-1-axis;
+		int off = offsets[axis];
+		
+		int n = 0;
+		for (int i=loc, count=0; count<dim[axis]; i+= off, ++count){
+			if (vec[i] != missing_value) ++n;
+		}
+		
+		return n;
+	}
+
+	Tensor<int> count_non_missing(int axis){
+		std::vector<int> dim_new = dim;
+		dim_new.erase(dim_new.begin()+dim_new.size()-1-axis);
+		Tensor<int> tens(dim_new);
+		tens.missing_value = this->missing_value;
+		
+		std::vector<int> locs = plane(axis);
+		
+		for (size_t i=0; i<locs.size(); ++i){
+			tens.vec[i] = count_non_missing_dim(locs[i], axis);
+		}
+		
+		return tens;
+	}
+
+	Tensor<T> avg_dim(int axis){
+		Tensor<T> tens = accumulate(0, axis, std::plus<T>());
+		Tensor<int> counts = count_non_missing(axis);
+		tens /= counts;
 		return tens;
 	}
 
@@ -363,7 +401,6 @@ class Tensor{
 		std::transform(vec.begin(), vec.end(), rhs.vec.begin(), vec.begin(), divides_missing);
 		return *this;
 	}
-
 
 	template<class S>	
 	Tensor<T>& operator += (S s){

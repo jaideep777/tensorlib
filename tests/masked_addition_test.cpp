@@ -3,7 +3,7 @@
 
 using namespace std;
 
-// compile:  g++ -Wall -Wextra -o 1 mask_test.cpp 
+// compile:  g++ -Wall -Wextra -o 1 masked_addition_test.cpp 
 
 bool equals(double x1, double x2, double tol=1e-6){
 	return (abs(x1-x2) < tol);
