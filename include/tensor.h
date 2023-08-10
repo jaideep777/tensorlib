@@ -79,9 +79,17 @@ class Tensor{
 	T missing_value = std::numeric_limits<T>::quiet_NaN();
 
 	public:
+
+	Tensor<T>(){
+	}
+
+	Tensor<T>(std::vector<int> _dim){
+		resize(_dim);
+	}
+
 	/// Create a tensor with specified dimensions.
 	/// This function also allocates space for the tensor, and calculates the offsets used for indexing.
-	Tensor(std::vector<int> _dim){
+	void resize(std::vector<int> _dim){
 		dim = _dim;
 		nelem = std::accumulate(dim.begin(), dim.end(), 1, std::multiplies<int>());
 		vec.resize(nelem);
@@ -96,18 +104,22 @@ class Tensor{
 		
 	}
 
+	void resize(std::vector<size_t> _dim){
+		std::vector<int> dim1(_dim.begin(), _dim.end());
+		resize(dim1);
+	}
 
 	/// Print the tensor.
 	/// If vals is true, then values are also printed. Otherwise, only metadata is printed.
-	void print(bool vals = true){
-	    std::cout << "Tensor:\n";
-	    std::cout << "   dims = "; for (auto d : dim) std::cout << d << " "; std::cout << "\n";
-	    std::cout << "   offs = "; for (auto d : offsets) std::cout << d << " "; std::cout << "\n";
-	    std::cout << "   missing value = " << missing_value << "\n";
+	void print(std::string prefix, bool vals){
+	    std::cout << prefix << "Tensor:\n";
+	    std::cout << prefix << "   dims = "; for (auto d : dim) std::cout << d << " "; std::cout << "\n";
+	    std::cout << prefix << "   offs = "; for (auto d : offsets) std::cout << d << " "; std::cout << "\n";
+	    std::cout << prefix << "   missing value = " << missing_value << "\n";
 		if (vals){
-			std::cout << "   vals = \n      "; std::cout.flush();
+			std::cout << prefix << "   vals = \n      "; std::cout.flush();
 			for (int i=0; i<nelem; ++i){
-				std::cout << vec[i] << " "; 
+				std::cout << prefix << vec[i] << " "; 
 				bool flag = true;
 				for (int axis=dim.size()-1; axis>0; --axis){
 					flag = flag && (index(i)[axis] == dim[axis]-1);
@@ -117,7 +129,12 @@ class Tensor{
 		}
 		std::cout << "\n";
 	}
-	
+
+	void print(bool vals = true){
+		print("", vals);
+	}
+
+
 //	TODO: 
 //	This function can be private
 	/// Convert coordinates (specified as a vector of indices) to 1D index where the value resides in the underlying vector.
@@ -285,6 +302,8 @@ class Tensor{
 		return n;
 	}
 
+	// count number of non-missing values along a given axis
+	// useful for calculating averages along a dimension
 	Tensor<int> count_non_missing(int axis){
 		std::vector<int> dim_new = dim;
 		dim_new.erase(dim_new.begin()+dim_new.size()-1-axis);
@@ -339,14 +358,25 @@ class Tensor{
 	}
 
 
+	// set all values where msk is 0 or missing, to missing value
 	template <class S>
-	Tensor<T> mask(const Tensor<S>& msk){
+	Tensor<T>& mask(const Tensor<S>& msk){
 		assert(dim == msk.dim);
 
 		auto mask_lambda = [this, &msk](T x, S m){
 			return (m == 0 || m == msk.missing_value)? this->missing_value : x;
 		};
 		std::transform(vec.begin(), vec.end(), msk.vec.begin(), vec.begin(), mask_lambda);
+		return *this;
+	}
+
+	// set all values where f returns false to missing value
+	template <class Func>
+	Tensor<T>& mask(Func f){
+		auto mask_lambda = [this, &f](T x){
+			return (!f(x))? this->missing_value : x; // if function returns false, set to missing
+		};
+		std::transform(vec.begin(), vec.end(), vec.begin(), mask_lambda);
 		return *this;
 	}
 
