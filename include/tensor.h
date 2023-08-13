@@ -8,7 +8,9 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
-
+#include <cmath>
+#include <string>
+#include <sstream>
 
 /**
  Tensor. Multidimensional Array
@@ -64,6 +66,11 @@
  
  */
 
+template <class T>
+std::ostream& operator << (std::ostream& os, const std::vector<T>& vec){
+	for (auto v : vec) os << v << ' ';
+	return os;
+}
 
 template <class T>
 class Tensor{
@@ -85,6 +92,10 @@ class Tensor{
 
 	Tensor<T>(std::vector<int> _dim){
 		resize(_dim);
+	}
+
+	const std::vector<int>& get_offsets() const {
+		return offsets;
 	}
 
 	/// Create a tensor with specified dimensions.
@@ -119,7 +130,11 @@ class Tensor{
 		if (vals){
 			std::cout << prefix << "   vals = \n      "; std::cout.flush();
 			for (int i=0; i<nelem; ++i){
-				std::cout << prefix << vec[i] << " "; 
+				std::cout << prefix; 
+				if (vec[i] == missing_value) std::cout << "NA";
+				else if (std::isnan(missing_value) && std::isnan(vec[i])) std::cout << "NA";
+				else std::cout << vec[i];
+				std::cout << ' '; 
 				bool flag = true;
 				for (int axis=dim.size()-1; axis>0; --axis){
 					flag = flag && (index(i)[axis] == dim[axis]-1);
@@ -168,7 +183,7 @@ class Tensor{
 
 
 	/// Convert 1D index to coordinates (Inverse of location())
-	std::vector<int> index(int loc){
+	std::vector<int> index(int loc) const {
 		int ndim = dim.size();
 		std::vector<int> id(ndim);
 		for (int i=ndim-1; i>=0; --i){
@@ -178,6 +193,7 @@ class Tensor{
 		}
 		return id;
 	}
+
 
 	/// A utility function for testing purposes. Fills the tensor with incremental integers. 
 	void fill_sequence(){
@@ -192,7 +208,7 @@ class Tensor{
 	// [..., 2, 1, 0]
 	//          ^
 	//           axis
-	std::vector<int> plane(int axis, int k = 0){
+	std::vector<int> plane(int axis, int k = 0) const {
 		axis = dim.size()-1-axis;
 		std::vector<int> locs;
 		locs.reserve(nelem);
@@ -332,6 +348,7 @@ class Tensor{
 		dim_new.push_back(n);
 		
 		Tensor<T> tout(dim_new);
+		tout.missing_value = this->missing_value;
 		int count = 0;
 		for (int i=0; i<nelem; ++i){
 			for (int j=0; j<n; ++j){
@@ -347,6 +364,7 @@ class Tensor{
 		dim_new.insert(dim_new.begin(), n);
 		
 		Tensor<T> tout(dim_new);
+		tout.missing_value = this->missing_value;
 		int count = 0;
 		for (int j=0; j<n; ++j){
 			for (int i=0; i<nelem; ++i){
@@ -357,6 +375,44 @@ class Tensor{
 		return tout;
 	}
 
+	template <class S>
+	Tensor<T> append(const Tensor<S> &rhs, int axis){
+		int axis_right = axis;
+		int axis_left = dim.size()-1-axis;
+		std::vector<int> dim_new = this->dim;
+		// check that dimensions conform along all axes except appending dimension
+		for (int i=0; i<dim_new.size(); ++i){
+			if (i == axis_left) continue;
+			assert (dim_new[i] == rhs.dim[i]);
+		}
+
+		dim_new[axis_left] += rhs.dim[axis_left];
+		Tensor<T> res(dim_new);
+		res.missing_value = this->missing_value;
+
+		int off_lhs = this->offsets[axis_left];
+		int off_rhs = rhs.get_offsets()[axis_left];
+		int off_res = res.get_offsets()[axis_left];
+
+		// Note plane function requires axis counted from the right
+		std::vector<int> locs_res1 = res.plane(axis_right); // get locations at index 0 on axis
+		std::vector<int> locs_lhs = this->plane(axis_right);
+		std::vector<int> locs_rhs = rhs.plane(axis_right);
+		// for each location, firts copy values from lhs, then from rhs
+		for (int il=0; il < locs_res1.size(); ++il){
+			// at each location, copy lhs size worth of data 
+			int i_res=locs_res1[il], i_lhs=locs_lhs[il], i_rhs=locs_rhs[il], count=0;
+			for (; count<this->dim[axis_left]; i_res+= off_res, i_lhs += off_lhs, ++count){
+				res.vec[i_res] = (this->vec[i_lhs] == this->missing_value)? res.missing_value : this->vec[i_lhs];	
+			}
+			// continue to copy rhs size worth of data 
+			for (; count<dim_new[axis_left]; i_res+= off_res, i_rhs += off_rhs, ++count){
+				res.vec[i_res] = (rhs.vec[i_rhs] == rhs.missing_value)? res.missing_value : rhs.vec[i_rhs];	
+			}
+		}
+
+		return res;
+	}
 
 	// set all values where msk is 0 or missing, to missing value
 	template <class S>
