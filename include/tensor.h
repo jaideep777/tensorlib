@@ -10,7 +10,6 @@
 #include <numeric>
 #include <cmath>
 #include <string>
-#include <sstream>
 
 /**
  Tensor. Multidimensional Array
@@ -444,7 +443,7 @@ class Tensor{
 		return res;
 	}
 
-	// Reverse tensor along the given axis
+	// Reverse along the given axis
 	Tensor<T>& reverse(int axis){
 		int axis_right = axis;
 		int axis_left = dim.size()-1-axis;
@@ -464,7 +463,11 @@ class Tensor{
 	}	
 
 
-	// Shift tensor cyclically along the given axis by M indices
+	// Shift cyclically along the given axis by M indices
+	// Right Shift by M (here = 4)
+	//  1 2 3  4 | 5 6 7 8 9 10    <-- original vector
+	// 10 9 8  7 | 6 5 4 3 2  1    <-- reverse entire range [0 --- N-1]
+	//  7 8 9 10 | 1 2 3 4 5  6    <-- reverse ranges [0 --- M-1], [M --- N-1]
 	Tensor<T>& rotate(int axis, int M){
 		int axis_right = axis;
 		int axis_left = dim.size()-1-axis;
@@ -474,11 +477,11 @@ class Tensor{
 		int N   = dim[axis_left];
 
 		for (int il=0; il < locs.size(); ++il){
-			// reverse entire range
+			// reverse [0 --- N-1]
 			for (int i=0; i<N/2; ++i) std::swap(vec[locs[il]+i*off], vec[locs[il]+(N-1-i)*off]);
-			// reverse 1---M
+			// reverse [0 --- M-1]
 			for (int i=0; i<M/2; ++i) std::swap(vec[locs[il]+i*off], vec[locs[il]+(M-1-i)*off]);
-			// reverse M+1---N
+			// reverse [M --- N-1]
 			for (int i=0; i<(N-M)/2; ++i) std::swap(vec[locs[il]+(M+i)*off], vec[locs[il]+(N-1-i)*off]);
 		}
 
