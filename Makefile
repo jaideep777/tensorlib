@@ -18,7 +18,15 @@ LIB_PATH :=
 CPPFLAGS = -O3 -g -pg -std=c++11 -Wall -Wextra -pedantic
 LDFLAGS =  -g -pg
 
-#CPPFLAGS += -Weffc++ 
+CPPFLAGS += -pedantic -Wall -Wextra -Wcast-align -Wcast-qual \
+            -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 \
+			-Winit-self -Wlogical-op \
+			-Wmissing-include-dirs -Wnoexcept -Wold-style-cast \
+			-Woverloaded-virtual -Wredundant-decls -Wshadow \
+			-Wsign-promo -Wstrict-null-sentinel \
+			-Wswitch-default -Wundef -Wno-unused \
+			# -Wstrict-overflow=5 -Wsign-conversion -Wmissing-declarations -Wfloat-equal \
+			# -Werror 
 
 #CPPFLAGS +=    \
 #-pedantic-errors  -Wcast-align \

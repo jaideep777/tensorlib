@@ -88,6 +88,7 @@ class Tensor{
 	public:
 
 	Tensor<T>(){
+		nelem = 0;
 	}
 
 	Tensor<T>(std::vector<int> _dim){
