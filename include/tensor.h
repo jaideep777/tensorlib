@@ -414,6 +414,35 @@ class Tensor{
 		return res;
 	}
 
+
+	Tensor<T> slice(int axis, size_t start, size_t end){
+		int axis_right = axis;
+		int axis_left = dim.size()-1-axis;
+		std::vector<int> dim_new = this->dim;
+		dim_new[axis_left] = end-start+1;
+
+		Tensor<T> res(dim_new);
+		res.missing_value = this->missing_value;
+
+		int off_lhs = this->offsets[axis_left];
+		int off_res = res.get_offsets()[axis_left];
+
+		// Note plane function requires axis counted from the right
+		std::vector<int> locs_res1 = res.plane(axis_right); // get locations at index 0 on axis
+		std::vector<int> locs_lhs = this->plane(axis_right, start);
+		// for each location, copy values from lhs
+		for (int il=0; il < locs_res1.size(); ++il){
+			// at each location, copy data from lhs
+			int i_res=locs_res1[il], i_lhs=locs_lhs[il], count=0;
+			for (; count < dim_new[axis_left]; i_res+= off_res, i_lhs += off_lhs, ++count){
+				res.vec[i_res] = (this->vec[i_lhs] == this->missing_value)? res.missing_value : this->vec[i_lhs];	
+			}
+		}
+
+		return res;
+	}
+
+
 	// set all values where msk is 0 or missing, to missing value
 	template <class S>
 	Tensor<T>& mask(const Tensor<S>& msk){

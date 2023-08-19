@@ -102,6 +102,8 @@ int main(){
 
 	if (!equals(uq.vec, expected_uq)) return 1;
 
+	// u.append(v, 0); // should throw
+
 	return 0;
 }
 
