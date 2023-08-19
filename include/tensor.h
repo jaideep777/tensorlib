@@ -444,6 +444,47 @@ class Tensor{
 		return res;
 	}
 
+	// Reverse tensor along the given axis
+	Tensor<T>& reverse(int axis){
+		int axis_right = axis;
+		int axis_left = dim.size()-1-axis;
+
+		std::vector<int> locs = plane(axis_right);
+		int off = offsets[axis_left];
+		int N   = dim[axis_left];
+
+		for (int il=0; il < locs.size(); ++il){
+			for (int i=0; i<N/2; ++i){
+				std::swap(vec[locs[il]+i*off], vec[locs[il]+(N-1-i)*off]);
+				// std::cout << "swapping " <<  vec[locs[il]+i*off] << " and " << vec[locs[il]+(N-1-i)*off] << '\n';
+			}
+		}
+
+		return *this;
+	}	
+
+
+	// Shift tensor cyclically along the given axis by M indices
+	Tensor<T>& rotate(int axis, int M){
+		int axis_right = axis;
+		int axis_left = dim.size()-1-axis;
+
+		std::vector<int> locs = plane(axis_right);
+		int off = offsets[axis_left];
+		int N   = dim[axis_left];
+
+		for (int il=0; il < locs.size(); ++il){
+			// reverse entire range
+			for (int i=0; i<N/2; ++i) std::swap(vec[locs[il]+i*off], vec[locs[il]+(N-1-i)*off]);
+			// reverse 1---M
+			for (int i=0; i<M/2; ++i) std::swap(vec[locs[il]+i*off], vec[locs[il]+(M-1-i)*off]);
+			// reverse M+1---N
+			for (int i=0; i<(N-M)/2; ++i) std::swap(vec[locs[il]+(M+i)*off], vec[locs[il]+(N-1-i)*off]);
+		}
+
+		return *this;
+	}
+
 
 	// set all values where msk is 0 or missing, to missing value
 	template <class S>
@@ -461,7 +502,7 @@ class Tensor{
 	template <class Func>
 	Tensor<T>& mask(Func f){
 		auto mask_lambda = [this, &f](T x){
-			return (!f(x))? this->missing_value : x; // if function returns false, set to missing
+			return (f(x))? x : this->missing_value; // if function returns false, set to missing
 		};
 		std::transform(vec.begin(), vec.end(), vec.begin(), mask_lambda);
 		return *this;
@@ -470,7 +511,7 @@ class Tensor{
 
 	// Operators
 	// see https://stackoverflow.com/questions/4421706/what-are-the-basic-rules-and-idioms-for-operator-overloading/4421719#4421719
-	// All operators are non-commutative in the sense that the missing value and other relavant metadata is retained from the LHS
+	// All operators are non-commutative in the sense that the missing value and any other metadata is retained from the LHS
 	public: 	
 	template <class S>
 	Tensor<T>& operator += (const Tensor<S>& rhs){
