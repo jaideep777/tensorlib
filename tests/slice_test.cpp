@@ -65,6 +65,16 @@ int main(){
 
 	if (!equals(u2.vec, expected_u2)) return 1;
 
+	Tensor<double> u210 = u.slice(0, 1,2).slice(1, 0,1).slice(2, 0,0);
+	u210.print();
+
+	vector<double> expected_u210 = {
+		1,2,
+		6,7 
+	};
+
+	if (!equals(u210.vec, expected_u210)) return 1;
+
 	return 0;
 }
 

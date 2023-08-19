@@ -88,6 +88,7 @@ class Tensor{
 	public:
 
 	Tensor<T>(){
+		nelem = 0;
 	}
 
 	Tensor<T>(std::vector<int> _dim){
@@ -203,11 +204,11 @@ class Tensor{
 	
 	/// @brief generate a list of 1D indices corresponding to all points on the hyperplane 
 	/// perpendicular to 'axis' located at index 'k' on the axis. The axis is specified
-	/// as the index of the corresponding dimension, i.e., between [0, n-1].
-	// axis is counted from the right
-	// [..., 2, 1, 0]
-	//          ^
-	//           axis
+	/// as the position (counted from the right) of the corresponding dimension in the 
+	/// dimensions vector, i.e., between [0, n-1].
+	//  [..., n2, n1, n0] = dimensions vector
+	//  [...,  2,  1,  0] 
+	//             ^ axis
 	std::vector<int> plane(int axis, int k = 0) const {
 		axis = dim.size()-1-axis;
 		std::vector<int> locs;
@@ -240,11 +241,12 @@ class Tensor{
 	//          ^
 	//           axis
 	template <class BinOp>
-	void transform(int axis, BinOp binary_op, std::vector<double> w){
+	Tensor<T>& transform(int axis, BinOp binary_op, std::vector<double> w){
 		std::vector<int> locs = plane(axis);
 		for (int i=0; i<locs.size(); ++i){
 			transform_dim(locs[i], axis, binary_op, w);
 		}
+		return *this;
 	}
 	
 	
@@ -442,6 +444,47 @@ class Tensor{
 		return res;
 	}
 
+	// Reverse tensor along the given axis
+	Tensor<T>& reverse(int axis){
+		int axis_right = axis;
+		int axis_left = dim.size()-1-axis;
+
+		std::vector<int> locs = plane(axis_right);
+		int off = offsets[axis_left];
+		int N   = dim[axis_left];
+
+		for (int il=0; il < locs.size(); ++il){
+			for (int i=0; i<N/2; ++i){
+				std::swap(vec[locs[il]+i*off], vec[locs[il]+(N-1-i)*off]);
+				// std::cout << "swapping " <<  vec[locs[il]+i*off] << " and " << vec[locs[il]+(N-1-i)*off] << '\n';
+			}
+		}
+
+		return *this;
+	}	
+
+
+	// Shift tensor cyclically along the given axis by M indices
+	Tensor<T>& rotate(int axis, int M){
+		int axis_right = axis;
+		int axis_left = dim.size()-1-axis;
+
+		std::vector<int> locs = plane(axis_right);
+		int off = offsets[axis_left];
+		int N   = dim[axis_left];
+
+		for (int il=0; il < locs.size(); ++il){
+			// reverse entire range
+			for (int i=0; i<N/2; ++i) std::swap(vec[locs[il]+i*off], vec[locs[il]+(N-1-i)*off]);
+			// reverse 1---M
+			for (int i=0; i<M/2; ++i) std::swap(vec[locs[il]+i*off], vec[locs[il]+(M-1-i)*off]);
+			// reverse M+1---N
+			for (int i=0; i<(N-M)/2; ++i) std::swap(vec[locs[il]+(M+i)*off], vec[locs[il]+(N-1-i)*off]);
+		}
+
+		return *this;
+	}
+
 
 	// set all values where msk is 0 or missing, to missing value
 	template <class S>
@@ -459,7 +502,7 @@ class Tensor{
 	template <class Func>
 	Tensor<T>& mask(Func f){
 		auto mask_lambda = [this, &f](T x){
-			return (!f(x))? this->missing_value : x; // if function returns false, set to missing
+			return (f(x))? x : this->missing_value; // if function returns false, set to missing
 		};
 		std::transform(vec.begin(), vec.end(), vec.begin(), mask_lambda);
 		return *this;
@@ -468,7 +511,7 @@ class Tensor{
 
 	// Operators
 	// see https://stackoverflow.com/questions/4421706/what-are-the-basic-rules-and-idioms-for-operator-overloading/4421719#4421719
-	// All operators are non-commutative in the sense that the missing value and other relavant metadata is retained from the LHS
+	// All operators are non-commutative in the sense that the missing value and any other metadata is retained from the LHS
 	public: 	
 	template <class S>
 	Tensor<T>& operator += (const Tensor<S>& rhs){

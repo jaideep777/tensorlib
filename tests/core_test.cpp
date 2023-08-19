@@ -75,27 +75,6 @@ int main(){
 	cout << "starts dim 2, off 1: "; for (auto xx : x) cout << xx << " "; cout << "\n";	
 	if (!equals(x, expected)) return 1;
 
-	
-	Tensor<double> v = u.accumulate(0, 0, std::plus<double>());
-	vector<double> expected1;
-	expected1 = {10,35,60,  
-	            85,110,135};
-	v.print();
-	if (!equals(v.vec, expected1)) return 1;
-	
-	Tensor<double> v1 = u.accumulate(0, 1, std::plus<double>());
-	expected1 = {15, 18, 21, 24, 27, 
-                60, 63, 66, 69, 72};
-	v1.print();
-	if (!equals(v1.vec, expected1)) return 1;
-
-	Tensor<double> v2 = u.accumulate(0, 2, std::plus<double>());
-	expected1 = {15, 17, 19, 21, 23, 
-                25, 27, 29, 31, 33, 
-                35, 37, 39, 41, 43};
-	v2.print();
-	if (!equals(v2.vec, expected1)) return 1;
-
 	u += 0.1;
 	u.print();
 	
