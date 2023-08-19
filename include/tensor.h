@@ -203,11 +203,11 @@ class Tensor{
 	
 	/// @brief generate a list of 1D indices corresponding to all points on the hyperplane 
 	/// perpendicular to 'axis' located at index 'k' on the axis. The axis is specified
-	/// as the index of the corresponding dimension, i.e., between [0, n-1].
-	// axis is counted from the right
-	// [..., 2, 1, 0]
-	//          ^
-	//           axis
+	/// as the position (counted from the right) of the corresponding dimension in the 
+	/// dimensions vector, i.e., between [0, n-1].
+	//  [..., n2, n1, n0] = dimensions vector
+	//  [...,  2,  1,  0] 
+	//             ^ axis
 	std::vector<int> plane(int axis, int k = 0) const {
 		axis = dim.size()-1-axis;
 		std::vector<int> locs;
@@ -240,11 +240,12 @@ class Tensor{
 	//          ^
 	//           axis
 	template <class BinOp>
-	void transform(int axis, BinOp binary_op, std::vector<double> w){
+	Tensor<T>& transform(int axis, BinOp binary_op, std::vector<double> w){
 		std::vector<int> locs = plane(axis);
 		for (int i=0; i<locs.size(); ++i){
 			transform_dim(locs[i], axis, binary_op, w);
 		}
+		return *this;
 	}
 	
 	
