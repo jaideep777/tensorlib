@@ -22,6 +22,7 @@ int main() {
     auto dot_product = dot(v1,v2); // Dot product
     auto cross_product = cross(v1,v2); // Cross product
 	auto v7 = normalize(v1, 0.f); // normalization
+	auto v8 = normalize_safe(float3(1e-13, 1e-14, 1e-16));
 
     // Expected answers
     vec3<float> expected_v3(5.0f, 7.0f, 9.0f);
@@ -31,6 +32,7 @@ int main() {
     float expected_dot_product = 32.0f;
     vec3<float> expected_cross_product(-3.0f, 6.0f, -3.0f);
     vec3<float> expected_v7(0.2672612, 0.5345225, 0.8017837);
+    vec3<float> expected_v8(0, 0, 0);
 
     // Testing
 	std::cout << "v3: " << v3 << " (Expected: " << expected_v3 << ")\n";
@@ -43,6 +45,8 @@ int main() {
     if (!approx_equal(v6, expected_v6)) return 1;
     std::cout << "v7: " << v7 << " (Expected: " << expected_v7 << ")\n";
     if (!approx_equal(v7, expected_v7)) return 1;
+    std::cout << "v8: " << v8 << " (Expected: " << expected_v8 << ")\n";
+    if (!approx_equal(v8, expected_v8)) return 1;
     std::cout << "Dot product: " << dot_product << " (Expected: " << expected_dot_product << ")\n";
     if (dot_product != expected_dot_product) return 1;
     std::cout << "Cross product: " << cross_product << " (Expected: " << expected_cross_product << ")\n";

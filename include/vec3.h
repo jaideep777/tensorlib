@@ -126,18 +126,19 @@ vec3<T> operator/(vec3<T> lhs, U scalar) {
 }
 
 // Normalize vector
+// this functions will not give divide by zero error if tol > 0. 
+// If v is zero and tol > 0, the normalized vector will be 0. 
 template<class T>
 vec3<T> normalize(const vec3<T>& v, T tol = 0) {
 	T mag = v.magnitude() + tol;
-	return vec3<T>(v.x / mag, v.y / mag, v.z / mag);
+	return v / mag;
 }
 
-// Normalize vector, but return zero if vector is 0
+// Normalize vector, but explicitly return zero if vector magnitude is < l2tol
 template<class T>
-vec3<T> normalize_zero(const vec3<T>& v) {
+vec3<T> normalize_safe(const vec3<T>& v, T l2tol = 1e-12, T tol = 1e-12) {
 	T mag = v.magnitude();
-	if (mag <= 0) return vec3<T>(0,0,0);
-	return vec3<T>(v.x / mag, v.y / mag, v.z / mag);
+	return (v / (mag+tol))*static_cast<T>(mag > l2tol);
 }
 
 // vector dot product
