@@ -1,5 +1,5 @@
-#ifndef MATH_TENSOR_H_
-#define MATH_TENSOR_H_
+#ifndef TENSORLIB_TENSOR_H_
+#define TENSORLIB_TENSOR_H_
 
 #include <iostream>
 #include <cassert>
